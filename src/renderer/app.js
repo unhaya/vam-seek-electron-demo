@@ -38,8 +38,8 @@ document.addEventListener('mousemove', (e) => {
   if (isResizingGrid) {
     const containerRect = document.getElementById('main').getBoundingClientRect();
     const newWidth = containerRect.right - e.clientX;
-    // 最小200px、最大600px
-    if (newWidth >= 200 && newWidth <= 600) {
+    // 最小200px、最大900px
+    if (newWidth >= 200 && newWidth <= 900) {
       gridPanel.style.width = newWidth + 'px';
     }
   } else if (isResizingTree) {

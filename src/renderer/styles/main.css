@@ -194,9 +194,9 @@ body {
 
 /* グリッドパネル（右） */
 #gridPanel {
-  width: 350px;
+  width: 600px;
   min-width: 200px;
-  max-width: 600px;
+  max-width: 900px;
   background: #12121a;
   border-left: 1px solid #333;
   display: flex;
