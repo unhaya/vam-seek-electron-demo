@@ -17,6 +17,9 @@
 
     <!-- メインコンテンツ -->
     <main id="main">
+      <!-- 左: ツリービュー展開ボタン（折りたたみ時に表示） -->
+      <button type="button" id="treeExpandBtn" class="panel-expand-btn left hidden" title="Expand Files">▶</button>
+
       <!-- 左: ツリービュー -->
       <aside id="treePanel">
         <div id="treePanelHeader">
@@ -68,6 +71,9 @@
         </div>
         <div id="gridContainer"></div>
       </aside>
+
+      <!-- 右: グリッド展開ボタン（折りたたみ時に表示） -->
+      <button type="button" id="gridExpandBtn" class="panel-expand-btn right hidden" title="Expand Grid">◀</button>
     </main>
 
   </div>

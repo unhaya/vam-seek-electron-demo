@@ -69,26 +69,42 @@ document.addEventListener('mouseup', () => {
 
 // ツリーパネル折りたたみ
 const treeCollapseBtn = document.getElementById('treeCollapseBtn');
+const treeExpandBtn = document.getElementById('treeExpandBtn');
 let treeCollapsed = false;
 
+function setTreeCollapsed(collapsed) {
+  treeCollapsed = collapsed;
+  treePanel.classList.toggle('collapsed', collapsed);
+  treeResizer.classList.toggle('hidden', collapsed);
+  treeExpandBtn.classList.toggle('hidden', !collapsed);
+}
+
 treeCollapseBtn.addEventListener('click', () => {
-  treeCollapsed = !treeCollapsed;
-  treePanel.classList.toggle('collapsed', treeCollapsed);
-  treeResizer.classList.toggle('hidden', treeCollapsed);
-  treeCollapseBtn.textContent = treeCollapsed ? '▶' : '◀';
-  treeCollapseBtn.title = treeCollapsed ? 'Expand' : 'Collapse';
+  setTreeCollapsed(true);
+});
+
+treeExpandBtn.addEventListener('click', () => {
+  setTreeCollapsed(false);
 });
 
 // グリッドパネル折りたたみ
 const gridCollapseBtn = document.getElementById('gridCollapseBtn');
+const gridExpandBtn = document.getElementById('gridExpandBtn');
 let gridCollapsed = false;
 
+function setGridCollapsed(collapsed) {
+  gridCollapsed = collapsed;
+  gridPanel.classList.toggle('collapsed', collapsed);
+  gridResizer.classList.toggle('hidden', collapsed);
+  gridExpandBtn.classList.toggle('hidden', !collapsed);
+}
+
 gridCollapseBtn.addEventListener('click', () => {
-  gridCollapsed = !gridCollapsed;
-  gridPanel.classList.toggle('collapsed', gridCollapsed);
-  gridResizer.classList.toggle('hidden', gridCollapsed);
-  gridCollapseBtn.textContent = gridCollapsed ? '◀' : '▶';
-  gridCollapseBtn.title = gridCollapsed ? 'Expand' : 'Collapse';
+  setGridCollapsed(true);
+});
+
+gridExpandBtn.addEventListener('click', () => {
+  setGridCollapsed(false);
 });
 
 // フォルダを開く
