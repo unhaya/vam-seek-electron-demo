@@ -1,7 +1,7 @@
 /**
  * VAM Seek - 2D Video Seek Marker Library
  *
- * @version 1.2.3
+ * @version 1.2.4
  * @license MIT
  * @author VAM Project
  *
@@ -190,15 +190,17 @@
             if (this.markerSvg) {
                 this.marker.innerHTML = this.markerSvg;
             } else {
-                // Default marker
+                // Default marker (VAM 5.70 style - red circle with play icon)
                 this.marker.innerHTML = `
-                    <svg width="40" height="40" viewBox="0 0 40 40">
-                        <circle cx="20" cy="20" r="18" fill="none" stroke="#ff4444" stroke-width="3"/>
-                        <circle cx="20" cy="20" r="4" fill="#ff4444"/>
-                        <line x1="20" y1="2" x2="20" y2="12" stroke="#ff4444" stroke-width="2"/>
-                        <line x1="20" y1="28" x2="20" y2="38" stroke="#ff4444" stroke-width="2"/>
-                        <line x1="2" y1="20" x2="12" y2="20" stroke="#ff4444" stroke-width="2"/>
-                        <line x1="28" y1="20" x2="38" y2="20" stroke="#ff4444" stroke-width="2"/>
+                    <svg width="40" height="40" viewBox="0 0 155.91 155.91">
+                        <defs>
+                            <style>
+                                .vam-marker-circle { fill: #b7392b; stroke: #fff; stroke-miterlimit: 10; stroke-width: 8px; }
+                                .vam-marker-play { fill: #fff; }
+                            </style>
+                        </defs>
+                        <circle class="vam-marker-circle" cx="77.95" cy="77.95" r="63.49"/>
+                        <path class="vam-marker-play" d="M66.6,109.32c-5.24,3.39-9.52,1.05-9.52-5.18v-52.38c0-6.24,4.28-8.57,9.52-5.18l38.99,25.21c5.24,3.39,5.24,8.93,0,12.31l-38.99,25.21Z"/>
                     </svg>
                 `;
             }
@@ -316,6 +318,19 @@
          * Move marker to cell (same as demo)
          */
         moveToCell(col, row) {
+            // Handle column overflow/underflow (wrap to next/previous row)
+            if (col >= this.columns) {
+                row += Math.floor(col / this.columns);
+                col = col % this.columns;
+            } else if (col < 0) {
+                // Going left from col 0 should go to previous row's last column
+                while (col < 0 && row > 0) {
+                    row--;
+                    col += this.columns;
+                }
+                col = Math.max(0, col);
+            }
+
             col = Math.max(0, col);
             row = Math.max(0, row);
 
@@ -825,11 +840,15 @@
             col = Math.max(0, Math.min(col, this.columns - 1));
             const colFraction = Math.max(0, Math.min(positionInRow - col, 1));
 
-            // X position: col cells + col gaps (gap only between cells, not after last)
-            const x = col * this.state.cellWidth + col * gap + colFraction * this.state.cellWidth;
+            // X position: cell start + fraction within cell
+            // Cell start = col * (cellWidth + gap)
+            // Position within cell = colFraction * cellWidth
+            const cellStartX = col * (this.state.cellWidth + gap);
+            const x = cellStartX + colFraction * this.state.cellWidth;
 
             // Y position: row cells + row gaps, centered in cell
-            const y = row * this.state.cellHeight + row * gap + this.state.cellHeight / 2;
+            const cellStartY = row * (this.state.cellHeight + gap);
+            const y = cellStartY + this.state.cellHeight / 2;
 
             return {
                 x: Math.max(0, Math.min(x, this.state.gridWidth)),
@@ -899,6 +918,13 @@
         _onMouseUp() {
             if (this.state.isDragging) {
                 this.state.isDragging = false;
+                // Snap marker Y position to cell center (keep X position as is)
+                const gap = this.state.gridGap || 2;
+                const cellPlusGapY = this.state.cellHeight + gap;
+                const yAdjusted = this.state.markerY - this.state.cellHeight / 2;
+                const row = Math.max(0, Math.min(Math.round(yAdjusted / cellPlusGapY), this.state.rows - 1));
+                const snappedY = row * cellPlusGapY + this.state.cellHeight / 2;
+                this._moveMarkerTo(this.state.markerX, snappedY, true);
                 this._scrollToMarker();
             }
         }
@@ -1029,7 +1055,7 @@
         /**
          * Library version
          */
-        version: '1.2.3'
+        version: '1.2.4'
     };
 
 })(typeof window !== 'undefined' ? window : this);
