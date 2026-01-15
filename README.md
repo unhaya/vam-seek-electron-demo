@@ -80,8 +80,8 @@ video.addEventListener('loadedmetadata', () => {
 
 Commercial use and redistribution are prohibited without permission.
 
-For commercial licensing inquiries, contact: because2990@gmail.com
+For commercial licensing inquiries, contact: haasiy@gmail.com
 
 ## Related
 
-- [VAM Seek](https://github.com/because2990/vam-seek) - The core library for 2D video seeking
+- [VAM Seek](https://github.com/unhaya/vam-seek) - The core library for 2D video seeking
