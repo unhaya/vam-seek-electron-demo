@@ -18,7 +18,7 @@
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
-    "url": "https://github.com/because2990/vam-seek-electron-demo"
+    "url": "https://github.com/unhaya/vam-seek-electron-demo"
   },
   "devDependencies": {
     "electron": "^28.0.0"
