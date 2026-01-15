@@ -59,6 +59,7 @@ body {
   width: 280px;
   min-width: 200px;
   max-width: 500px;
+  flex-shrink: 0;
   background: #12121a;
   border-right: 1px solid #333;
   display: flex;
@@ -194,9 +195,10 @@ body {
 
 /* グリッドパネル（右） */
 #gridPanel {
-  width: 600px;
+  width: 350px;
   min-width: 200px;
   max-width: 900px;
+  flex-shrink: 0;
   background: #12121a;
   border-left: 1px solid #333;
   display: flex;
