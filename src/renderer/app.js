@@ -252,11 +252,14 @@ function loadVideo(videoPath, videoName) {
 // 動画メタデータ読み込み完了時にVAM Seekを初期化
 video.addEventListener('loadedmetadata', () => {
   if (typeof VAMSeek !== 'undefined') {
+    const scrollValue = document.getElementById('scrollSelect').value;
     vamInstance = VAMSeek.init({
       video: video,
       container: gridContainer,
       columns: parseInt(document.getElementById('columnsSelect').value),
       secondsPerCell: parseInt(document.getElementById('secondsSelect').value),
+      autoScroll: scrollValue !== 'off',
+      scrollBehavior: scrollValue === 'off' ? 'center' : scrollValue,
       onSeek: (time, cell) => {
         console.log(`Seeked to ${time.toFixed(2)}s`);
       },
