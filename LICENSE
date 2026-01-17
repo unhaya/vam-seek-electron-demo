@@ -1,56 +1,57 @@
-VAM Seek Electron Demo - Personal Use License
+VAM Seek AI - Public Beta License
+==================================
 
-Copyright (c) 2026 VAM Project
+Copyright (c) 2026 unhaya
+https://github.com/unhaya
 
-Permission is hereby granted, free of charge, to any individual obtaining a copy
-of this software and associated documentation files (the "Software"), to use the
-Software for personal, non-commercial purposes only, subject to the following
-conditions:
+This license is inspired by CC BY-NC-SA 4.0, adapted for software.
 
-1. PERSONAL USE ONLY
-   The Software may only be used for personal, non-commercial purposes.
-   Commercial use, including but not limited to:
-   - Selling the Software or derivatives
-   - Using the Software in a commercial product or service
-   - Using the Software to generate revenue
-   is strictly prohibited without prior written permission from the copyright holder.
 
-2. NO REDISTRIBUTION
-   Redistribution of the Software, in whole or in part, in any form, is prohibited
-   without prior written permission from the copyright holder.
+1. Purpose & Ownership
+----------------------
+This software is a personal project shared with the community during
+public beta. All rights remain with the original author (unhaya).
 
-3. NO MODIFICATION FOR DISTRIBUTION
-   You may modify the Software for personal use only. Distribution of modified
-   versions is prohibited without prior written permission from the copyright holder.
 
-4. ATTRIBUTION
-   If you share screenshots or demonstrations of this Software, attribution to
-   the original project is required.
+2. Permitted Use (Go Wild!)
+---------------------------
+You are free to:
 
-5. NO WARRANTY
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-   SOFTWARE.
+- USE: Run the software for personal, educational, or research purposes
+- MODIFY: Change the code for your own use
+- SHARE: Share the original with proper attribution
+- LEARN: Study the code, write about it, teach with it
 
-6. ENFORCEMENT
-   The copyright holder actively monitors for unauthorized use of this Software.
-   Any violation of these license terms, including but not limited to unauthorized
-   commercial use, redistribution, or derivative works, will be subject to legal
-   action. The copyright holder reserves the right to pursue all available legal
-   remedies, including but not limited to:
-   - Injunctive relief
-   - Monetary damages
-   - Recovery of attorney's fees and court costs
+Attribution format: "Created by unhaya - https://github.com/unhaya"
 
-   Violations may also be reported to relevant platforms (GitHub, app stores, etc.)
-   for DMCA takedown or equivalent enforcement actions.
+
+3. Restrictions (The Red Line)
+------------------------------
+You may NOT:
+
+- SELL: Sell this software or derivatives
+- MONETIZE: Use in any commercial product or service
+- REBRAND: Remove attribution or claim as your own work
+- CLOSE: Create proprietary/closed-source derivatives
+
+If you share modifications, use the same license (ShareAlike).
+
+
+4. Commercial Licensing
+-----------------------
+Want to use this commercially? Let's talk.
+
+Contact: haasiy@gmail.com
+
+I'm open to partnerships that respect the spirit of this project.
+
+
+5. Disclaimer
+-------------
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND.
+USE AT YOUR OWN RISK.
 
 ---
 
-For commercial licensing inquiries, please contact:
-- Email: haasiy@gmail.com
-- GitHub: https://github.com/unhaya
+TL;DR: Use it, learn from it, share it. Just don't sell it or claim
+it's yours. Want to go commercial? Email me.
