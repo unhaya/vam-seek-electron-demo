@@ -629,24 +629,35 @@
                 // Get cells (exclude marker element)
                 const cells = this.grid.querySelectorAll('.vam-cell');
 
-                // Distribute cells among parallel extractors
-                const numExtractors = this.state.extractorVideos.length;
-                const cellsPerExtractor = Math.ceil(this.state.totalCells / numExtractors);
+                // === VIEWPORT-FIRST EXTRACTION ===
+                // Phase 1: Extract visible cells first (user sees results immediately)
+                // Phase 2: Extract remaining cells in background
 
-                // Create extraction tasks for each extractor
-                const extractionTasks = this.state.extractorVideos.map((extractorVideo, extractorIndex) => {
-                    return this._extractFramesWithVideo(
-                        extractorVideo,
-                        extractorIndex,
-                        cellsPerExtractor,
+                const visibleIndices = this._getVisibleCellIndices();
+                const allIndices = Array.from({ length: this.state.totalCells }, (_, i) => i);
+                const remainingIndices = allIndices.filter(i => !visibleIndices.includes(i));
+
+                // Phase 1: Visible cells with all extractors
+                if (visibleIndices.length > 0 && isTaskValid()) {
+                    await this._extractCellsByIndices(
+                        this.state.extractorVideos,
+                        visibleIndices,
                         cells,
                         targetVideoUrl,
                         isTaskValid
                     );
-                });
+                }
 
-                // Run all extractors in parallel
-                await Promise.all(extractionTasks);
+                // Phase 2: Remaining cells in background
+                if (remainingIndices.length > 0 && isTaskValid()) {
+                    await this._extractCellsByIndices(
+                        this.state.extractorVideos,
+                        remainingIndices,
+                        cells,
+                        targetVideoUrl,
+                        isTaskValid
+                    );
+                }
 
             } catch (e) {
                 // Frame extraction error - call onError callback if provided
@@ -657,19 +668,61 @@
         }
 
         /**
-         * Extract frames using a single extractor video (for parallel processing)
+         * Get indices of cells currently visible in viewport
          */
-        async _extractFramesWithVideo(extractorVideo, extractorIndex, cellsPerExtractor, cells, targetVideoUrl, isTaskValid) {
-            const startIndex = extractorIndex * cellsPerExtractor;
-            const endIndex = Math.min(startIndex + cellsPerExtractor, this.state.totalCells);
+        _getVisibleCellIndices() {
+            const containerRect = this.container.getBoundingClientRect();
+            const scrollTop = this.container.scrollTop;
+            const viewportTop = scrollTop;
+            const viewportBottom = scrollTop + containerRect.height;
 
-            for (let i = startIndex; i < endIndex; i++) {
-                // Check if task was cancelled (cache is preserved)
-                if (!isTaskValid()) {
-                    break;
+            const cellHeight = this.state.cellHeight + (this.state.gridGap || 2);
+            const startRow = Math.floor(viewportTop / cellHeight);
+            const endRow = Math.ceil(viewportBottom / cellHeight);
+
+            const indices = [];
+            for (let row = startRow; row <= endRow && row < this.state.rows; row++) {
+                for (let col = 0; col < this.columns; col++) {
+                    const index = row * this.columns + col;
+                    if (index < this.state.totalCells) {
+                        indices.push(index);
+                    }
                 }
+            }
+            return indices;
+        }
 
-                // Extract thumbnail from center of cell (0.5 offset)
+        /**
+         * Extract specific cells by indices using parallel extractors
+         */
+        async _extractCellsByIndices(extractorVideos, indices, cells, targetVideoUrl, isTaskValid) {
+            const numExtractors = extractorVideos.length;
+            const indicesPerExtractor = Math.ceil(indices.length / numExtractors);
+
+            const tasks = extractorVideos.map((extractorVideo, extractorIndex) => {
+                const startIdx = extractorIndex * indicesPerExtractor;
+                const endIdx = Math.min(startIdx + indicesPerExtractor, indices.length);
+                const myIndices = indices.slice(startIdx, endIdx);
+
+                return this._extractFramesByIndices(
+                    extractorVideo,
+                    myIndices,
+                    cells,
+                    targetVideoUrl,
+                    isTaskValid
+                );
+            });
+
+            await Promise.all(tasks);
+        }
+
+        /**
+         * Extract frames for specific cell indices
+         */
+        async _extractFramesByIndices(extractorVideo, indices, cells, targetVideoUrl, isTaskValid) {
+            for (const i of indices) {
+                if (!isTaskValid()) break;
+
                 const timestamp = (i + 0.5) * this.secondsPerCell;
                 const cell = cells[i];
                 if (!cell) continue;
@@ -681,21 +734,16 @@
                     continue;
                 }
 
-                // Check extractorVideo still exists (may be cleaned up by rebuild)
                 if (!extractorVideo || !isTaskValid()) break;
 
                 const frame = await this._extractFrame(extractorVideo, timestamp);
 
-                // Check again after async operation
                 if (!isTaskValid()) break;
 
                 if (frame) {
                     this.frameCache.put(targetVideoUrl, timestamp, frame);
                     this._displayFrame(cell, frame);
                 }
-
-                // Small delay to prevent overwhelming the system
-                await new Promise(r => setTimeout(r, 5));
             }
         }
 
@@ -752,11 +800,9 @@
                     if (resolved) return;
                     resolved = true;
                     video.removeEventListener('seeked', onSeeked);
-                    // Wait for frame to render, then capture
-                    setTimeout(async () => {
-                        const frame = await this._captureFrame(video);
-                        resolve(frame);
-                    }, 50);
+                    // Capture immediately - frame is already rendered when seeked fires
+                    const frame = await this._captureFrame(video);
+                    resolve(frame);
                 };
 
                 video.addEventListener('seeked', onSeeked);
@@ -889,18 +935,21 @@
             if (!this.autoScroll) return;
 
             const viewportHeight = this.container.clientHeight;
+            // Use targetY (final destination) instead of markerY (animating position)
+            // to prevent scroll position flickering during marker animation
+            const markerTargetY = this.state.targetY;
 
             if (this.scrollBehavior === 'edge') {
                 // Edge-trigger: only scroll when marker reaches screen edge
                 const scrollTop = this.container.scrollTop;
-                if (this.state.markerY < scrollTop + 50) {
-                    this._smoothScrollTo(Math.max(0, this.state.markerY - 100));
-                } else if (this.state.markerY > scrollTop + viewportHeight - 50) {
-                    this._smoothScrollTo(this.state.markerY - viewportHeight + 100);
+                if (markerTargetY < scrollTop + 50) {
+                    this._smoothScrollTo(Math.max(0, markerTargetY - 100));
+                } else if (markerTargetY > scrollTop + viewportHeight - 50) {
+                    this._smoothScrollTo(markerTargetY - viewportHeight + 100);
                 }
             } else {
                 // Center-following (default): marker stays at viewport center
-                const targetScroll = Math.max(0, this.state.markerY - viewportHeight / 2);
+                const targetScroll = Math.max(0, markerTargetY - viewportHeight / 2);
                 this._smoothScrollTo(targetScroll);
             }
         }

@@ -1,32 +1,49 @@
-# VAM Seek Electron Demo v2.0.0
+# VAM Seek Electron Demo v7.0
 
-A desktop video player demo built with Electron, showcasing the [VAM Seek](https://github.com/unhaya/vam-seek) library for 2D thumbnail grid video seeking.
+A desktop video player with **AI-powered video analysis**. Browse local videos, seek with a 2D thumbnail grid, and chat with Claude to understand video content.
 
-## What's New in v2.0.0
+## AI Video Analysis
 
-- **Auto-restore last folder** - Automatically opens the previously used folder on startup
-- **Compact grid header** - Collapse button and settings (Col/Sec/Scroll) in a single row
-- **Flat tree view** - Removed folder indentation for cleaner look
+Ask questions about your video and get answers based on the visual content:
 
-https://github.com/user-attachments/assets/bfa93f6e-9a75-4d6f-b6a0-52814098b6c2
+- "What happens in this video?"
+- "Where does the scene change?"
+- "Find the part where..."
 
-## How to Use
+The AI sees your entire video as a thumbnail grid and can reference specific timestamps.
 
-1. **Open Folder** - Click the "Open Folder" button to select a folder containing video files
-2. **Select Video** - Click on a video file in the left tree view to load it
-3. **Seek with Grid** - Click any thumbnail in the right grid panel to jump to that time
-4. **Adjust Settings** - Use the dropdown menus to change grid columns, seconds per cell, and scroll behavior
-5. **Right-click Video** - Change aspect ratio (Original / Fit to Height)
-6. **Resize Panels** - Drag the panel borders to resize, click arrows to collapse/expand
+### Setup
 
-All settings are automatically saved and restored on next launch.
+1. **AI > Settings** (or `Ctrl+,`)
+2. Enter your Anthropic API key
+3. Select a model (Sonnet recommended for vision tasks)
+
+### Usage
+
+1. Load a video
+2. **AI > Open Chat** (or `Ctrl+Shift+A`)
+3. Ask anything about the video
+
+The AI receives the current thumbnail grid as an image, so it can see and describe what's happening at any point in the video.
 
 ## Features
 
-- Folder tree view for browsing local video files
-- 2D thumbnail grid for visual video seeking (powered by VAM Seek)
-- Resizable and collapsible panels
-- Supports MP4, WebM files (MOV, AVI, MKV shown in tree but playback depends on codec)
+- **AI Chat** - Ask questions about video content using Claude Vision
+- **Folder Browser** - Tree view for browsing local video files
+- **2D Thumbnail Grid** - Visual video seeking powered by VAM Seek
+- **Resizable Panels** - Drag borders to resize, click arrows to collapse
+- **Auto-restore** - Remembers last folder and settings
+
+## How to Use
+
+1. **Open Folder** - Click "Open Folder" to select a folder with videos
+2. **Select Video** - Click a video in the tree view to load it
+3. **Seek with Grid** - Click any thumbnail to jump to that time
+4. **Chat with AI** - Open chat and ask about the video content
+5. **Adjust Settings** - Change grid columns, seconds per cell, scroll behavior
+6. **Right-click Video** - Change aspect ratio
+
+All settings are automatically saved and restored.
 
 ## Quick Start
 
