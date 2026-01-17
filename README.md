@@ -65,11 +65,16 @@ Human grid (UI) and AI grid (analysis) are separate.
 
 **Current:**
 - Auto grid density: 2s/cell for ≤1min, 60s/cell for 30min+
+- Clickable timestamps: AI returns `[1:23]` → click to jump
 
 **In Development:**
-- AI requests zoom on specific time ranges
-- Pass 1: Full overview (48 frames)
-- Pass 2: High-density capture on regions of interest
+- AI controls time granularity to answer your question
+- You ask: "When does the red car appear?"
+- AI scans the overview grid, spots something at ~2:00
+- AI requests a zoomed grid (2s intervals) for 1:30-2:30
+- AI returns the exact timestamp: `[2:07]`
+
+The AI decides what resolution it needs. You just ask.
 
 ## Also Included
 
