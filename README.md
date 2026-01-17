@@ -1,118 +1,84 @@
-# VAM Seek Electron Demo v7.0
+# VAM Seek Electron Demo
 
-A desktop video player with **AI-powered video analysis**. Browse local videos, seek with a 2D thumbnail grid, and chat with Claude to understand video content.
+A local video player with 2D thumbnail seeking. Now with experimental AI chat.
 
-## AI Video Analysis
+## The Idea
 
-Ask questions about your video and get answers based on the visual content:
+Video analysis with AI is expensive. A 10-minute video at 1fps = 600 frames = 600 API calls. That adds up fast.
 
-- "What happens in this video?"
-- "Where does the scene change?"
-- "Find the part where..."
+What if we compressed the entire video into a single image? A 2D grid of thumbnails, like a contact sheet. One image, one API call, full video context.
 
-The AI sees your entire video as a thumbnail grid and can reference specific timestamps.
+That's what this does.
 
-### Setup
-
-1. **AI > Settings** (or `Ctrl+,`)
-2. Enter your Anthropic API key
-3. Select a model (Sonnet recommended for vision tasks)
-
-### Usage
+## How It Works
 
 1. Load a video
-2. **AI > Open Chat** (or `Ctrl+Shift+A`)
-3. Ask anything about the video
+2. The app generates a thumbnail grid (e.g., 8 columns × 6 rows = 48 frames)
+3. You ask Claude about the video
+4. Claude sees the entire grid as one image and can reference any timestamp
 
-The AI receives the current thumbnail grid as an image, so it can see and describe what's happening at any point in the video.
-
-## Features
-
-- **AI Chat** - Ask questions about video content using Claude Vision
-- **Folder Browser** - Tree view for browsing local video files
-- **2D Thumbnail Grid** - Visual video seeking powered by VAM Seek
-- **Resizable Panels** - Drag borders to resize, click arrows to collapse
-- **Auto-restore** - Remembers last folder and settings
-
-## How to Use
-
-1. **Open Folder** - Click "Open Folder" to select a folder with videos
-2. **Select Video** - Click a video in the tree view to load it
-3. **Seek with Grid** - Click any thumbnail to jump to that time
-4. **Chat with AI** - Open chat and ask about the video content
-5. **Adjust Settings** - Change grid columns, seconds per cell, scroll behavior
-6. **Right-click Video** - Change aspect ratio
-
-All settings are automatically saved and restored.
+The grid is small (~1500×660px) so it fits within vision model limits. 48 frames covering a whole video gives you the gist without bankrupting your API budget.
 
 ## Quick Start
 
 ```bash
-# Clone the repository
 git clone https://github.com/unhaya/vam-seek-electron-demo.git
 cd vam-seek-electron-demo
-
-# Install dependencies
 npm install
-
-# Run the app
 npm start
 ```
 
-## Project Structure
+You'll need an Anthropic API key. Go to AI > Settings (or Ctrl+,) to configure.
 
-```
-vam-seek-electron-demo/
-├── src/
-│   ├── main/
-│   │   └── main.js          # Electron main process
-│   ├── renderer/
-│   │   ├── index.html       # Main HTML
-│   │   ├── app.js           # Renderer application logic
-│   │   ├── lib/
-│   │   │   └── vam-seek.js  # VAM Seek library
-│   │   └── styles/
-│   │       └── main.css     # Styles
-│   └── preload/
-│       └── preload.js       # IPC bridge
-├── package.json
-└── README.md
-```
+## Features
 
-## How It Works
+- **AI Chat** - Ask about video content. "What happens at the end?" "Where does the scene change?"
+- **2D Thumbnail Grid** - Click any cell to seek. The original VAM Seek use case.
+- **Folder Browser** - Built-in tree view so you don't alt-tab to Explorer
+- **Settings persist** - Remembers your last folder, grid config, etc.
 
-This demo integrates VAM Seek into an Electron application:
+## Limitations
 
-1. **Main Process** (`main.js`): Handles file system operations and folder dialogs
-2. **Preload Script** (`preload.js`): Exposes safe IPC APIs to the renderer
-3. **Renderer** (`app.js`): Initializes VAM Seek and manages the UI
+This is a prototype. The AI accuracy depends heavily on:
+- Video complexity (simple scenes work better)
+- Grid resolution (more cells = more detail but bigger image)
+- What you're asking (scene changes are easier than reading text)
 
-### VAM Seek Integration
+Don't expect miracles. But for many videos, "good enough" beats "600 API calls."
 
-```javascript
-// Initialize VAM Seek when video metadata is loaded
-video.addEventListener('loadedmetadata', () => {
-  vamInstance = VAMSeek.init({
-    video: video,
-    container: gridContainer,
-    columns: 4,
-    secondsPerCell: 15,
-    onSeek: (time) => console.log(`Seeked to ${time}s`)
-  });
-});
-```
+## Why
+
+I wanted to ask Claude about videos without:
+- Uploading to cloud services
+- Running local models (my GPU is sad)
+- Spending $10 per video on API calls
+
+Turns out a thumbnail grid captures more than you'd think.
 
 ## Requirements
 
 - Node.js 18+
-- npm or yarn
+- Anthropic API key
 
-## Why the Tree View?
+## Project Structure
 
-I got tired of switching between File Explorer and Video Player. Open a file, check the scene, not the one, go back to Explorer, repeat.
-
-A player should browse. An explorer should seek. So I built both into one window.
+```
+src/
+├── main/
+│   ├── main.js        # Electron main, file ops
+│   └── ai-service.js  # Claude API calls
+├── renderer/
+│   ├── app.js         # Grid generation, UI
+│   ├── chat.js        # Chat window logic
+│   └── lib/vam-seek.js
+└── preload/
+    └── preload.js     # IPC bridge
+```
 
 ## Related
 
-- [VAM Seek](https://github.com/unhaya/vam-seek) - The core library for 2D video seeking
+- [VAM Seek](https://github.com/unhaya/vam-seek) - The core 2D seeking library (vanilla JS, no deps)
+
+---
+
+*Built because I got tired of opening File Explorer and VLC in two windows. A player should browse. An explorer should seek.*
