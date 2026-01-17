@@ -54,6 +54,23 @@ The same thumbnail grid humans use to navigate becomes the input for AI vision. 
 
 For scene changes, visual flow, "what happens when" questions — it works.
 
+## Work in Progress: Adaptive Resolution
+
+**Dual Grid Architecture**
+
+Human grid (UI) and AI grid (analysis) are separate.
+
+- Human: Browse with preferred columns/intervals
+- AI: Fixed 8×6 grid, auto-adjusted density based on video length
+
+**Current:**
+- Auto grid density: 2s/cell for ≤1min, 60s/cell for 30min+
+
+**In Development:**
+- AI requests zoom on specific time ranges
+- Pass 1: Full overview (48 frames)
+- Pass 2: High-density capture on regions of interest
+
 ## Also Included
 
 - Folder browser with tree view
