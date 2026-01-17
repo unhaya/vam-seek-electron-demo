@@ -90,6 +90,23 @@ video.addEventListener('loadedmetadata', () => {
 - Node.js 18+
 - npm or yarn
 
+## The Story: Why the Tree View?
+
+I was tired of the "Context Switching Hell."
+
+Before this, I was using a massive 100k-line Python application I built. But as I used it, I realized I only needed one thing to be truly productive: **The Tree View integrated with the Player.**
+
+For years, I had to jump back and forth between the OS File Explorer and the Video Player.
+- "Where was that file?" (Switch to Explorer)
+- "Let's check the scene." (Switch to Player)
+- "Not this one." (Switch back to Explorer)
+
+**Why should they be separate?** A player should be able to explore. An explorer should be able to seek.
+
+So, I stripped away everything else from that 100k-line beast and extracted only the "Essence" into this Electron demo. This integrated Tree View isn't just a UI feature—it's my answer to the frustration of broken workflows.
+
+It's not part of the core VAM Seek logic, but it's the best way to experience how fast video discovery *should* be.
+
 ## Related
 
 - [VAM Seek](https://github.com/unhaya/vam-seek) - The core library for 2D video seeking
