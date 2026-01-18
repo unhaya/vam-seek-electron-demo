@@ -18,6 +18,10 @@ let cachedSystemPrompt = null; // System prompt for current conversation
 // 'normal' | 'zoom_asking' | 'zoom_waiting'
 let currentPhase = 'normal';
 
+// Auto-zoom protection
+const MAX_ZOOM_DEPTH = 2;  // Maximum auto-zoom requests per conversation
+let zoomCount = 0;         // Current zoom count in session
+
 // Settings file path
 function getSettingsPath() {
   return path.join(app.getPath('userData'), 'ai-settings.json');
@@ -112,6 +116,19 @@ function clearConversation() {
   cachedVideoHash = null;
   cachedSystemPrompt = null;
   currentPhase = 'normal';
+  zoomCount = 0;  // Reset zoom counter
+}
+
+// Check if auto-zoom is allowed
+function canAutoZoom() {
+  return zoomCount < MAX_ZOOM_DEPTH;
+}
+
+// Increment zoom count (call when zoom is performed)
+function incrementZoomCount() {
+  zoomCount++;
+  console.log(`[AI] Zoom count: ${zoomCount}/${MAX_ZOOM_DEPTH}`);
+  return zoomCount;
 }
 
 // Set phase
@@ -162,7 +179,7 @@ function pruneOldZoomImages() {
 }
 
 // Build phase-specific system prompt
-function buildSystemPrompt(gridData, phase) {
+function buildSystemPrompt(gridData, phase, allowAutoZoom = false) {
   // Calculate video duration in minutes
   const durationMin = gridData ? Math.ceil(gridData.duration / 60) : 0;
   const totalCells = gridData?.totalCells || 0;
@@ -177,9 +194,18 @@ function buildSystemPrompt(gridData, phase) {
   }
 
   // Normal phase - clearly state video duration and grid structure
-  return `${durationMin}分の動画。${totalCells}枚のフレーム、各${secPerCell}秒間隔。
+  let prompt = `${durationMin}分の動画。${totalCells}枚のフレーム、各${secPerCell}秒間隔。
 各フレーム左下にタイムスタンプ表示。
-回答はM:SS形式のみ（例: 1:07, 12:30）。「付近」「頃」禁止。`;
+回答はM:SS形式のみ（例: 1:07, 12:30）。「付近」「頃」禁止。
+List timestamps in chronological order.`;
+
+  // Add auto-zoom capability if allowed
+  if (allowAutoZoom) {
+    prompt += `
+If you need higher resolution to answer accurately, output [ZOOM_AUTO:M:SS-M:SS] at the END of your response. Only use this for specific time ranges (max 2 min span). Do not zoom if the current grid is sufficient.`;
+  }
+
+  return prompt;
 }
 
 // Analyze video grid with Claude Vision (with prompt caching)
@@ -197,7 +223,9 @@ async function analyzeGrid(userMessage, gridData, overridePhase = null) {
 
   // Use override phase if provided, otherwise use current phase
   const effectivePhase = overridePhase || currentPhase;
-  const systemPrompt = buildSystemPrompt(gridData, effectivePhase);
+  // Allow auto-zoom only if under limit and in normal phase
+  const allowAutoZoom = canAutoZoom() && effectivePhase === 'normal';
+  const systemPrompt = buildSystemPrompt(gridData, effectivePhase, allowAutoZoom);
 
   cachedSystemPrompt = systemPrompt;
 
@@ -384,5 +412,7 @@ module.exports = {
   analyzeZoomGrid,
   clearConversation,
   setPhase,
-  getPhase
+  getPhase,
+  canAutoZoom,
+  incrementZoomCount
 };

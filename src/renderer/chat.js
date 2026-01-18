@@ -49,7 +49,26 @@ async function sendMessage() {
       // Normal phase: regular question
       const response = await window.electronAPI.sendChatMessage(text);
       loadingEl.remove();
-      addMessage(response.message, 'ai');
+
+      // Check for auto-zoom request in response
+      const autoZoomMatch = response.message.match(/\[ZOOM_AUTO:(\d+:\d{2})-(\d+:\d{2})\]/);
+
+      if (autoZoomMatch) {
+        // Remove the ZOOM_AUTO tag from displayed message
+        const cleanMessage = response.message.replace(/\[ZOOM_AUTO:\d+:\d{2}-\d+:\d{2}\]/, '').trim();
+        if (cleanMessage) {
+          addMessage(cleanMessage, 'ai');
+        }
+
+        // Execute auto-zoom
+        const startTime = parseTimestamp(autoZoomMatch[1]);
+        const endTime = parseTimestamp(autoZoomMatch[2]);
+
+        addMessage(`Auto-zooming to ${autoZoomMatch[1]} - ${autoZoomMatch[2]}...`, 'system');
+        await executeAutoZoom(startTime, endTime, text);
+      } else {
+        addMessage(response.message, 'ai');
+      }
     }
 
   } catch (err) {
@@ -65,7 +84,7 @@ async function sendMessage() {
   }
 }
 
-// Execute zoom (capture grid and send to AI)
+// Execute zoom (capture grid and send to AI) - manual zoom
 async function executeZoom(startTime, endTime) {
   const loadingEl = showLoading();
 
@@ -81,6 +100,28 @@ async function executeZoom(startTime, endTime) {
   } catch (err) {
     loadingEl.remove();
     addMessage(`Zoom error: ${err.message}`, 'system');
+  }
+}
+
+// Execute auto-zoom (AI-initiated zoom with original question context)
+async function executeAutoZoom(startTime, endTime, originalQuestion) {
+  const loadingEl = showLoading();
+
+  try {
+    // Notify main process to increment zoom counter
+    await window.electronAPI.incrementZoomCount();
+
+    const response = await window.electronAPI.sendZoomChatMessage(
+      `Higher resolution view. Answer the original question: ${originalQuestion}`,
+      startTime,
+      endTime
+    );
+
+    loadingEl.remove();
+    addMessage(response.message, 'ai');
+  } catch (err) {
+    loadingEl.remove();
+    addMessage(`Auto-zoom error: ${err.message}`, 'system');
   }
 }
 

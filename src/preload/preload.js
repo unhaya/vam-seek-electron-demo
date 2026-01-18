@@ -19,6 +19,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // AI Phase management
   setAIPhase: (phase) => ipcRenderer.invoke('set-ai-phase', phase),
   getAIPhase: () => ipcRenderer.invoke('get-ai-phase'),
+  // Auto-zoom counter
+  incrementZoomCount: () => ipcRenderer.invoke('increment-zoom-count'),
   // Seek video to timestamp (from chat window)
   seekToTimestamp: (seconds) => ipcRenderer.send('seek-to-timestamp', seconds),
   // Listen for folder selection from menu

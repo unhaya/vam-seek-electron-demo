@@ -335,6 +335,11 @@ ipcMain.handle('get-ai-phase', async () => {
   return aiService.getPhase();
 });
 
+// Auto-zoom counter
+ipcMain.handle('increment-zoom-count', async () => {
+  return aiService.incrementZoomCount();
+});
+
 // Request fresh grid capture from main window
 ipcMain.handle('request-grid-capture', async () => {
   if (!mainWindow) return currentGridData;
