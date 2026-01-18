@@ -64,6 +64,7 @@ For scene changes, visual flow, "what happens when" questions — it works.
 - Settings persistence
 - Auto grid density: 2s/cell for short videos, 60s/cell for 30min+
 - Clickable timestamps in AI responses
+- Prompt caching: grid image sent once, follow-up questions don't resend (90% cost reduction)
 
 ## Requirements
 
