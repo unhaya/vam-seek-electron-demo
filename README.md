@@ -13,24 +13,15 @@
 | Traditional (1fps) | 600 | ~$1.80/video |
 | Video-to-Grid | 1 | ~$0.003/video |
 
-Real usage per query: **~2000 input tokens, ~500 output tokens**
-
-## How It Works
-
-1. Load a video
-2. App generates 8×6 grid (~1568×660px)
-3. Ask Claude anything
-4. Claude sees the grid, references timestamps
-
-That's it. No cloud upload, no FFmpeg server, no frame-by-frame processing.
+Real usage per query: ~2000 input tokens, ~500 output tokens
 
 https://github.com/user-attachments/assets/77fb3661-4667-47d6-a4f1-3bae18653c51
 
 ## Quick Start
 
 ```bash
-git clone https://github.com/unhaya/vam-seek-electron-demo.git
-cd vam-seek-electron-demo
+git clone https://github.com/unhaya/vam-seek-ai.git
+cd vam-seek-ai
 npm install
 npm start
 ```
@@ -40,48 +31,43 @@ npm start
 3. **AI > Open Chat** (`Ctrl+Shift+A`)
 4. Ask: "What happens in this video?"
 
-## Why This Works
+## How It Works
 
-VAM Seek extracts frames client-side using Canvas API. No server needed.
+1. Load a video
+2. App generates 8×6 grid (~1568×660px)
+3. Ask Claude anything
+4. Claude sees the grid, references timestamps
 
-The same thumbnail grid humans use to navigate becomes the input for AI vision. One image captures the entire video timeline.
+The thumbnail grid humans use to navigate becomes AI's input. One image captures the entire timeline. No cloud upload, no FFmpeg server.
+
+## Verification
+
+AI returns timestamps AND grid coordinates:
+
+```
+Architecture diagram at [8:23] (Row 2, Col 5).
+Prior context: [7:50] title slide "System Overview"
+Following: [9:15] code examples
+```
+
+You see exactly which cell AI is referencing. Click to verify before trusting.
 
 ## Limitations
 
 - Fast motion between frames may be missed
 - Small text unreadable at thumbnail resolution
-- Audio-dependent content not captured
+- Audio content not captured
 
 For scene changes, visual flow, "what happens when" questions — it works.
 
-## Work in Progress: Adaptive Resolution
-
-**Dual Grid Architecture**
-
-Human grid (UI) and AI grid (analysis) are separate.
-
-- Human: Browse with preferred columns/intervals
-- AI: Fixed 8×6 grid, auto-adjusted density based on video length
-
-**Current:**
-- Auto grid density: 2s/cell for ≤1min, 60s/cell for 30min+
-- Clickable timestamps: AI returns `[1:23]` → click to jump
-
-**In Development:**
-- AI controls time granularity to answer your question
-- You ask: "When does the red car appear?"
-- AI scans the overview grid, spots something at ~2:00
-- AI requests a zoomed grid (2s intervals) for 1:30-2:30
-- AI returns the exact timestamp: `[2:07]`
-
-The AI decides what resolution it needs. You just ask.
-
-## Also Included
+## Features
 
 - Folder browser with tree view
-- 2D thumbnail seeking
+- 2D thumbnail seeking (VAM Seek core)
 - Resizable panels
 - Settings persistence
+- Auto grid density: 2s/cell for short videos, 60s/cell for 30min+
+- Clickable timestamps in AI responses
 
 ## Requirements
 
@@ -90,79 +76,25 @@ The AI decides what resolution it needs. You just ask.
 
 ## Security
 
-Your API key is stored locally in Electron's userData directory (plain JSON). It never leaves your machine—API calls go directly from your app to Anthropic.
+API key stored in Electron's userData (plain JSON). Never leaves your machine—calls go directly to Anthropic.
 
-**Note:** This is a research prototype. For production use, store your API key in environment variables (`.env` file with dotenv) instead of the settings UI. This prevents plaintext storage and keeps secrets out of version control.
+For production: use environment variables instead of settings UI.
 
-**Next step:** Implement Electron's safeStorage for seamless and secure key management.
+## Future
 
-## Future: Whisper Integration
+**Adaptive Resolution**
 
-**Grid + Transcript = Complete Video Search**
+Human grid (UI) and AI grid (analysis) are separate. Current: fixed density based on video length. Planned: AI requests zoomed grids for specific time ranges. Overview → detail → exact timestamp.
 
-Currently, visual-only analysis misses audio content. Whisper integration would enable:
+**Whisper Integration**
 
-- Timestamped transcript (SRT/VTT format)
-- Combined input: grid image + plain text with timestamps
-- AI searches both visual frames AND spoken words
-
-**Example query:** "When do they mention the budget?"
-- Grid shows: meeting room, presentation charts
-- Transcript shows: `[3:45] "The budget for Q2 is..."`
-- AI returns: `[3:45]` with visual + audio context
-
-**Technical path:** transformers.js v3 now supports WebGPU, enabling up to 100x speedup over WASM. Whisper-tiny/base can transcribe faster than real-time on local GPU. The infrastructure is ready—grid timestamps align with transcript timestamps.
+Grid + transcript for audio search. Example: "When do they mention the budget?" → AI returns `[3:45]` from transcript with visual context. Infrastructure ready, waiting for lighter local models.
 
 ## Known Challenges
 
-Honest assessment of what needs work, with planned solutions:
-
-- **Recursive zoom control**: When AI requests a zoomed grid, context grows and can confuse the model. *Solution: Sliding window context—drop or replace old overview images when sending detailed grids. Keep token usage constant.*
-
-- **Recursion limits**: AI could request infinite zooms. *Solution: Max-depth limits and confidence thresholds in code.*
-
-- **Answer verification**: Users can't verify AI reasoning. *Solution: Require AI to return cell coordinates (e.g., Row 3, Col 5) alongside timestamps. Highlight referenced cells in UI with red border.*
-
-- **Secure key storage**: Plain JSON in userData is vulnerable. *Solution: Migrate to Electron's safeStorage API (uses OS-level encryption: Windows DPAPI, macOS Keychain, Linux Libsecret). For development, environment variables are acceptable.*
-
-## Analysis Trace
-
-**AI Precision Analysis: From Macro to Seconds**
-
-How do you find a specific moment in a 30-minute video? Traditional approach: blind scrubbing. With VAM Seek × AI, you ask.
-
-### Coordinate Accuracy
-
-AI returns both timestamps AND grid coordinates:
-- "The subject appears at [12:45] (Row 3, Col 4)"
-- UI highlights the referenced cell
-- You verify visually before clicking
-
-This eliminates "hallucination trust issues"—you see exactly where AI is looking.
-
-### Real Analysis Example
-
-Query: "Find when the presenter shows the architecture diagram"
-
-```
-[AI Response]
-I found the architecture diagram at [8:23] (Row 2, Col 5).
-
-The slide appears clearly in this cell, showing a layered system
-architecture with three tiers. The presenter gestures toward it
-for approximately 45 seconds.
-
-Prior context: [7:50] shows a title slide "System Overview"
-Following context: [9:15] transitions to code examples
-```
-
-### Why This Works
-
-1. **Zero-Search Latency**: No waiting for video seek. Grid is already extracted.
-2. **Context Retention**: AI sees before/after frames simultaneously.
-3. **Visual Verification**: Coordinate references let you confirm AI's reasoning.
-
-The grid becomes a visual index. AI reads the index. You navigate with confidence.
+- **Recursive zoom**: Context grows with each zoom request. Solution: sliding window, drop old images.
+- **Recursion limits**: AI could request infinite zooms. Solution: max-depth limits.
+- **Secure storage**: Plain JSON is vulnerable. Solution: Electron's safeStorage API.
 
 ## Related
 
