@@ -1,6 +1,6 @@
 {
   "name": "vam-seek-ai",
-  "version": "7.0.0",
+  "version": "7.1.0",
   "description": "AI-powered video analysis using VAM Seek and Claude",
   "main": "src/main/main.js",
   "scripts": {
@@ -12,13 +12,14 @@
     "thumbnail",
     "seek",
     "electron",
-    "demo"
+    "ai",
+    "claude"
   ],
   "author": "",
   "license": "SEE LICENSE IN LICENSE",
   "repository": {
     "type": "git",
-    "url": "https://github.com/unhaya/vam-seek-electron-demo"
+    "url": "https://github.com/unhaya/vam-seek-ai"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.30.0"
