@@ -185,6 +185,24 @@
       0%, 80%, 100% { transform: scale(0); }
       40% { transform: scale(1); }
     }
+
+    /* Zoom button */
+    #zoomBtn {
+      padding: 10px 14px;
+      background: #0f3460;
+      border: 1px solid #7c5cff;
+      border-radius: 8px;
+      color: #7c5cff;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    #zoomBtn:hover {
+      background: #7c5cff;
+      color: white;
+    }
+
   </style>
 </head>
 <body>
@@ -198,6 +216,7 @@
   </div>
 
   <div id="chatInputArea">
+    <button id="zoomBtn" title="Zoom to time range">Zoom</button>
     <input type="text" id="chatInput" placeholder="Ask about the video..." autocomplete="off">
     <button id="sendBtn">Send</button>
   </div>

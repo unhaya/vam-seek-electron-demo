@@ -65,6 +65,9 @@ For scene changes, visual flow, "what happens when" questions — it works.
 - Auto grid density: 2s/cell for short videos, 60s/cell for 30min+
 - Clickable timestamps in AI responses
 - Prompt caching: grid image sent once, follow-up questions don't resend (90% cost reduction)
+- **Zoom feature**: AI can request higher resolution grids for specific time ranges
+- **Phase-based prompts**: Reduced hallucination via context-aware system prompts
+- **Jab technique**: Primes AI with video metadata before questions for better accuracy
 
 ## Requirements
 
@@ -79,9 +82,9 @@ For production: use environment variables instead of settings UI.
 
 ## Future
 
-**Adaptive Resolution**
+**Adaptive Resolution** ✅ Implemented
 
-Human grid (UI) and AI grid (analysis) are separate. Current: fixed density based on video length. Planned: AI requests zoomed grids for specific time ranges. Overview → detail → exact timestamp.
+Human grid (UI) and AI grid (analysis) are separate. ~~Current: fixed density based on video length. Planned: AI requests zoomed grids for specific time ranges.~~ Now implemented: Click "Zoom" button → AI asks which part → specify time range → AI analyzes high-res grid of that range.
 
 **Whisper Integration**
 

@@ -237,9 +237,10 @@ ipcMain.handle('folder-exists', async (event, folderPath) => {
 // AI Chat message handler
 ipcMain.handle('send-chat-message', async (event, message) => {
   try {
-    // Request fresh grid capture before sending to AI
     let gridData = currentGridData;
-    if (mainWindow) {
+
+    // グリッドデータがない場合はキャプチャをリクエスト
+    if ((!gridData || !gridData.gridImage) && mainWindow) {
       gridData = await new Promise((resolve) => {
         gridCaptureResolve = resolve;
         mainWindow.webContents.send('grid-capture-request');
@@ -258,6 +259,33 @@ ipcMain.handle('send-chat-message', async (event, message) => {
     throw err;
   }
 });
+
+// 未使用：元のグリッドキャプチャロジック（参考用に残す）
+/*
+ipcMain.handle('send-chat-message-old', async (event, message) => {
+  try {
+    let gridData = currentGridData;
+    const needsFreshCapture = !currentGridData || !currentGridData.gridImage;
+    if (needsFreshCapture && mainWindow) {
+      gridData = await new Promise((resolve) => {
+        gridCaptureResolve = resolve;
+        mainWindow.webContents.send('grid-capture-request');
+        setTimeout(() => {
+          if (gridCaptureResolve) {
+            gridCaptureResolve(currentGridData);
+            gridCaptureResolve = null;
+          }
+        }, 3000);
+      });
+    }
+
+    const response = await aiService.analyzeGrid(message, gridData);
+    return response;
+  } catch (err) {
+    throw err;
+  }
+});
+*/
 
 // Grid data from renderer
 ipcMain.handle('get-grid-data', async () => {
@@ -293,6 +321,16 @@ ipcMain.on('seek-to-timestamp', (event, seconds) => {
   }
 });
 
+// AI Phase management
+ipcMain.handle('set-ai-phase', async (event, phase) => {
+  aiService.setPhase(phase);
+  return { success: true };
+});
+
+ipcMain.handle('get-ai-phase', async () => {
+  return aiService.getPhase();
+});
+
 // Request fresh grid capture from main window
 ipcMain.handle('request-grid-capture', async () => {
   if (!mainWindow) return currentGridData;
@@ -317,5 +355,63 @@ ipcMain.on('grid-capture-response', (event, data) => {
   if (gridCaptureResolve) {
     gridCaptureResolve(data);
     gridCaptureResolve = null;
+  }
+});
+
+// === Zoom Grid Capture ===
+let zoomGridCaptureResolve = null;
+
+// Request zoom grid capture from main window
+ipcMain.handle('request-zoom-grid-capture', async (event, startTime, endTime) => {
+  if (!mainWindow) return null;
+
+  return new Promise((resolve) => {
+    zoomGridCaptureResolve = resolve;
+    mainWindow.webContents.send('zoom-grid-capture-request', startTime, endTime);
+
+    // Timeout after 10 seconds (zoom capture takes longer)
+    setTimeout(() => {
+      if (zoomGridCaptureResolve) {
+        zoomGridCaptureResolve(null);
+        zoomGridCaptureResolve = null;
+      }
+    }, 10000);
+  });
+});
+
+// Receive zoom grid capture response
+ipcMain.on('zoom-grid-capture-response', (event, data) => {
+  if (zoomGridCaptureResolve) {
+    zoomGridCaptureResolve(data);
+    zoomGridCaptureResolve = null;
+  }
+});
+
+// Zoom chat message handler - send zoomed grid to AI
+ipcMain.handle('send-zoom-chat-message', async (event, message, startTime, endTime) => {
+  try {
+    // Request zoom grid capture
+    let zoomGridData = null;
+    if (mainWindow) {
+      zoomGridData = await new Promise((resolve) => {
+        zoomGridCaptureResolve = resolve;
+        mainWindow.webContents.send('zoom-grid-capture-request', startTime, endTime);
+        setTimeout(() => {
+          if (zoomGridCaptureResolve) {
+            zoomGridCaptureResolve(null);
+            zoomGridCaptureResolve = null;
+          }
+        }, 10000);
+      });
+    }
+
+    if (!zoomGridData) {
+      throw new Error('Failed to capture zoom grid');
+    }
+
+    const response = await aiService.analyzeZoomGrid(message, zoomGridData);
+    return response;
+  } catch (err) {
+    throw err;
   }
 });

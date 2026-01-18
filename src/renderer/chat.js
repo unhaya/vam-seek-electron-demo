@@ -4,40 +4,148 @@ const chatInput = document.getElementById('chatInput');
 const sendBtn = document.getElementById('sendBtn');
 const connectionStatus = document.getElementById('connectionStatus');
 
+// Zoom state - tracked locally for UI feedback
+let isZoomWaiting = false;  // Waiting for user to specify zoom range
+
 // Send message
 async function sendMessage() {
   const text = chatInput.value.trim();
   if (!text) return;
 
-  // Add user message
   addMessage(text, 'user');
   chatInput.value = '';
   sendBtn.disabled = true;
 
-  // Show loading
   const loadingEl = showLoading();
 
   try {
-    // Request AI response via IPC
-    const response = await window.electronAPI.sendChatMessage(text);
+    // Check current phase
+    const currentPhase = await window.electronAPI.getAIPhase();
 
-    // Remove loading
-    loadingEl.remove();
+    if (currentPhase === 'zoom_waiting') {
+      // Phase 3: User specified zoom range, AI extracts it
+      const response = await window.electronAPI.sendChatMessage(text);
+      loadingEl.remove();
 
-    // Add AI response
-    addMessage(response.message, 'ai');
+      // Check for ZOOM_REQUEST in response
+      const zoomMatch = response.message.match(/\[ZOOM_REQUEST:(\d+:\d{2})-(\d+:\d{2})\]/);
 
-    // Handle cell highlights if any
-    if (response.cells && response.cells.length > 0) {
-      addMessage(`Cells of interest: ${response.cells.join(', ')}`, 'system');
+      if (zoomMatch) {
+        const startTime = parseTimestamp(zoomMatch[1]);
+        const endTime = parseTimestamp(zoomMatch[2]);
+
+        // Reset phase to normal
+        await window.electronAPI.setAIPhase('normal');
+        isZoomWaiting = false;
+        updateZoomButton();
+
+        // Execute zoom
+        await executeZoom(startTime, endTime);
+      } else {
+        // AI didn't understand, show response and stay in zoom_waiting
+        addMessage(response.message, 'ai');
+      }
+    } else {
+      // Normal phase: regular question
+      const response = await window.electronAPI.sendChatMessage(text);
+      loadingEl.remove();
+      addMessage(response.message, 'ai');
     }
+
   } catch (err) {
     loadingEl.remove();
     addMessage(`Error: ${err.message}`, 'system');
+    // Reset phase on error
+    await window.electronAPI.setAIPhase('normal');
+    isZoomWaiting = false;
+    updateZoomButton();
   } finally {
     sendBtn.disabled = false;
     chatInput.focus();
   }
+}
+
+// Execute zoom (capture grid and send to AI)
+async function executeZoom(startTime, endTime) {
+  const loadingEl = showLoading();
+
+  try {
+    const response = await window.electronAPI.sendZoomChatMessage(
+      'Analyze this zoomed range in detail.',
+      startTime,
+      endTime
+    );
+
+    loadingEl.remove();
+    addMessage(response.message, 'ai');
+  } catch (err) {
+    loadingEl.remove();
+    addMessage(`Zoom error: ${err.message}`, 'system');
+  }
+}
+
+// Zoom button - start zoom dialog with phase management
+async function startZoomDialog() {
+  // Phase 1: Set phase to zoom_asking
+  await window.electronAPI.setAIPhase('zoom_asking');
+
+  addMessage('Zoom', 'user');
+  sendBtn.disabled = true;
+  const loadingEl = showLoading();
+
+  try {
+    // AI will ask which part to zoom (zoom_asking phase)
+    const response = await window.electronAPI.sendChatMessage(
+      'User wants to zoom. Ask which part.'
+    );
+
+    loadingEl.remove();
+    addMessage(response.message, 'ai');
+
+    // Phase 2: Now waiting for user to specify range
+    await window.electronAPI.setAIPhase('zoom_waiting');
+    isZoomWaiting = true;
+    updateZoomButton();
+
+  } catch (err) {
+    loadingEl.remove();
+    addMessage(`Error: ${err.message}`, 'system');
+    await window.electronAPI.setAIPhase('normal');
+    isZoomWaiting = false;
+    updateZoomButton();
+  } finally {
+    sendBtn.disabled = false;
+    chatInput.focus();
+  }
+}
+
+// Update zoom button appearance based on state
+function updateZoomButton() {
+  const zoomBtn = document.getElementById('zoomBtn');
+  if (isZoomWaiting) {
+    zoomBtn.style.background = '#7c5cff';
+    zoomBtn.style.color = 'white';
+    zoomBtn.title = 'Waiting for zoom range...';
+  } else {
+    zoomBtn.style.background = '#0f3460';
+    zoomBtn.style.color = '#7c5cff';
+    zoomBtn.title = 'Zoom to time range';
+  }
+}
+
+// Cancel zoom mode
+async function cancelZoom() {
+  await window.electronAPI.setAIPhase('normal');
+  isZoomWaiting = false;
+  updateZoomButton();
+  addMessage('Zoom cancelled.', 'system');
+}
+
+// Format seconds to M:SS
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, '0')}`;
 }
 
 // Parse timestamp string to seconds
@@ -58,18 +166,6 @@ function parseTimestamp(timeStr) {
 
 // Convert timestamps in text to clickable links
 function linkifyTimestamps(text) {
-  // Match patterns like: 0:00, 1:23, 12:34, 1:23:45, 0-3分, 15-20分, 1時間30分, etc.
-  const patterns = [
-    // Range patterns: 0-3分, 15-20分あたり, 1時間30分-2時間
-    /(\d+時間)?(\d+)分?[-〜~](\d+時間)?(\d+)分(あたり|頃)?/g,
-    // Japanese style: 1時間30分, 3時間30分
-    /(\d+)時間(\d+)?分?/g,
-    // Standard timestamp: 1:23:45, 12:34, 0:00
-    /\d{1,2}:\d{2}(:\d{2})?/g,
-    // Simple minute: 15分, 20分あたり
-    /(\d+)分(あたり|頃)?/g
-  ];
-
   let result = text;
 
   // Process range patterns first (e.g., "0-3分", "15-20分")
@@ -80,7 +176,7 @@ function linkifyTimestamps(text) {
   });
 
   // Process hour-minute ranges (e.g., "1時間30分-2時間")
-  result = result.replace(/(\d+)時間(\d+)?分?[-〜~](\d+)時間(\d+)?分?/g, (match, h1, m1, h2, m2) => {
+  result = result.replace(/(\d+)時間(\d+)?分?[-〜~](\d+)時間(\d+)?分?/g, (match, h1, m1) => {
     const startSec = parseInt(h1) * 3600 + (parseInt(m1) || 0) * 60;
     return `<a href="#" class="timestamp-link" data-seconds="${startSec}">${match}</a>`;
   });
@@ -149,12 +245,27 @@ function showLoading() {
 }
 
 // Event listeners
-sendBtn.addEventListener('click', sendMessage);
+sendBtn.addEventListener('click', () => sendMessage());
 
 chatInput.addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && !e.shiftKey) {
     e.preventDefault();
     sendMessage();
+  }
+  // ESC to cancel zoom mode
+  if (e.key === 'Escape' && isZoomWaiting) {
+    cancelZoom();
+  }
+});
+
+// Zoom button
+const zoomBtn = document.getElementById('zoomBtn');
+zoomBtn.addEventListener('click', () => {
+  if (isZoomWaiting) {
+    // Already waiting - cancel
+    cancelZoom();
+  } else {
+    startZoomDialog();
   }
 });
 
