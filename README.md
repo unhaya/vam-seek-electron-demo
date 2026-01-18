@@ -26,17 +26,13 @@ npm install
 npm start
 ```
 
-1. **AI > Settings** (`Ctrl+,`) → Enter Anthropic API key
-2. Load a video
-3. **AI > Open Chat** (`Ctrl+Shift+A`)
-4. Ask: "What happens in this video?"
+**AI > Settings** (`Ctrl+,`) → Enter Anthropic API key
 
 ## How It Works
 
-1. Load a video
-2. App generates 8×6 grid (~1568×660px)
-3. Ask Claude anything
-4. Claude sees the grid, references timestamps
+1. Load a video → App generates 8×6 grid (~1568×660px)
+2. **AI > Open Chat** (`Ctrl+Shift+A`) → Ask anything
+3. Claude sees the grid, references timestamps
 
 The thumbnail grid humans use to navigate becomes AI's input. One image captures the entire timeline. No cloud upload, no FFmpeg server.
 
