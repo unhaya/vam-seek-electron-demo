@@ -94,7 +94,7 @@ Your API key is stored locally in Electron's userData directory (plain JSON). It
 
 **Note:** This is a research prototype. For production use, store your API key in environment variables (`.env` file with dotenv) instead of the settings UI. This prevents plaintext storage and keeps secrets out of version control.
 
-## Future: Whisper Integration
+## In Development: Whisper Integration
 
 **Grid + Transcript = Complete Video Search**
 
@@ -109,21 +109,19 @@ Currently, visual-only analysis misses audio content. Whisper integration would 
 - Transcript shows: `[3:45] "The budget for Q2 is..."`
 - AI returns: `[3:45]` with visual + audio context
 
-**Why not implemented yet:**
-- Whisper is computationally heavy (~0.5x real-time on CPU)
-- Requires local model or external API
-- Current focus: visual analysis workflow
-
-The infrastructure is ready. Grid timestamps align with transcript timestamps. When Whisper becomes lighter (or GPU-accelerated), the integration is straightforward.
+**Technical path:** transformers.js v3 now supports WebGPU, enabling up to 100x speedup over WASM. Whisper-tiny/base can transcribe faster than real-time on local GPU. The infrastructure is ready—grid timestamps align with transcript timestamps.
 
 ## Known Challenges
 
-Honest assessment of what needs work:
+Honest assessment of what needs work, with planned solutions:
 
-- **Recursive zoom control**: When AI requests a zoomed grid, context grows. Need to drop or compress previous overview images to avoid token bloat.
-- **Recursion limits**: AI could theoretically request infinite zooms. Requires max-depth limits and confidence thresholds.
-- **Answer verification**: No visual highlighting of which cells AI used to reach conclusions. Users can't easily verify AI reasoning.
-- **Secure key storage**: Currently uses Electron userData (plain JSON). For real use, switch to environment variables. For distribution, consider OS-level secure storage (e.g., node-keytar).
+- **Recursive zoom control**: When AI requests a zoomed grid, context grows and can confuse the model. *Solution: Sliding window context—drop or replace old overview images when sending detailed grids. Keep token usage constant.*
+
+- **Recursion limits**: AI could request infinite zooms. *Solution: Max-depth limits and confidence thresholds in code.*
+
+- **Answer verification**: Users can't verify AI reasoning. *Solution: Require AI to return cell coordinates (e.g., Row 3, Col 5) alongside timestamps. Highlight referenced cells in UI with red border.*
+
+- **Secure key storage**: Plain JSON in userData is vulnerable. *Solution: Migrate to Electron's safeStorage API (uses OS-level encryption: Windows DPAPI, macOS Keychain, Linux Libsecret). For development, environment variables are acceptable.*
 
 ## Related
 
